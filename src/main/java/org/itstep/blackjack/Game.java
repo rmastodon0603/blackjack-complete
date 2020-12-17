@@ -30,6 +30,7 @@ public class Game {
         log.info("Player take a card {}", card);
         publishPlayerTakeCard(card);
         if (player.getPoints() > TWENTY_ONE) {
+            dealer.getCards().get(0).setHide(false);
             publishGameOver(getWinner());
             log.info("Game over. Win {}", getWinner());
         }
