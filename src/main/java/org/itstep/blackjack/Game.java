@@ -1,112 +1,63 @@
 package org.itstep.blackjack;
 
+import lombok.extern.slf4j.Slf4j;
 import org.itstep.blackjack.card.Card;
-import org.itstep.blackjack.event.EventListener;
-import org.itstep.blackjack.event.EventType;
-import org.itstep.blackjack.event.GameContext;
+import org.itstep.blackjack.event.GameEventListener;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
+@Slf4j
 public class Game {
+    public static final int TWENTY_ONE = 21;
+    public static final int THRESHOLD = 15;
+
     private final Player player;
     private final Player dealer;
     private final Deck deck;
-    private final Map<EventType, List<EventListener<? super GameContext>>> events;
+    private final List<GameEventListener> eventListeners;
 
     public Game() {
         deck = new Deck();
         dealer = new Player(0);
         player = new Player(1000);
-        events = new HashMap<>();
-    }
-
-    public void addEvent(EventType type, EventListener<? super GameContext> listener) {
-        events.putIfAbsent(type, new ArrayList<>());
-        events.get(type).add(listener);
+        eventListeners = new ArrayList<>();
     }
 
     public void hit() {
         Card card = deck.getOne();
         player.takeCard(card);
-        publishHit(card);
-        if(player.getPoints() > 21) {
-            publishGameOver();
+        log.info("Player take a card {}", card);
+        publishPlayerTakeCard(card);
+        if (player.getPoints() > TWENTY_ONE) {
+            publishGameOver(getWinner());
+            log.info("Game over. Win {}", getWinner());
         }
-    }
-
-    public Player getDealer() {
-        return dealer;
-    }
-
-    public Player getPlayer() {
-        return player;
     }
 
     public void stand() {
         dealer.getCards().get(0).setHide(false);
         publishStand();
-        while (dealer.getPoints() < 15) {
+        log.info("Stand");
+        while (dealer.getPoints() < THRESHOLD) {
             Card card = deck.getOne();
             dealer.takeCard(card);
             publishDealerTakeCard(card);
+            log.info("Dealer take a card {}", card);
         }
-        publishGameOver();
+        publishGameOver(getWinner());
+        log.info("Game over. Win {}", getWinner());
     }
 
     public void setBet(int amount) throws NoMoneyEnough {
         player.setBet(amount);
     }
 
-    private void publishStand() {
-        if(events.containsKey(EventType.STAND)) {
-            events.get(EventType.STAND)
-                    .forEach(eventListener -> eventListener.handle(new GameContext()));
-        }
-    }
-
-    private void publishHit(Card card) {
-        if(events.containsKey(EventType.HIT)) {
-            events.get(EventType.HIT)
-                    .forEach(l -> l.handle(new GameContext(card)));
-        }
-    }
-
-    private void publishStart() {
-        if(events.containsKey(EventType.START)) {
-            events.get(EventType.START)
-                    .forEach(eventListener -> eventListener.handle(new GameContext()));
-        }
-    }
-
-    private void publishGameOver() {
-        if(events.containsKey(EventType.GAME_OVER)) {
-            events.get(EventType.GAME_OVER)
-                    .forEach(l -> l.handle(new GameContext()));
-        }
-    }
-
-    private void publishPlayerTakeCard(Card card) {
-        if(events.containsKey(EventType.PLAYER_GET_CARD)) {
-            events.get(EventType.PLAYER_GET_CARD)
-                    .forEach(eventListener -> eventListener.handle(new GameContext(card)));
-        }
-    }
-
-    private void publishDealerTakeCard(Card card) {
-        if(events.containsKey(EventType.DEALER_GET_CARD)) {
-            events.get(EventType.DEALER_GET_CARD)
-                    .forEach(eventListener -> eventListener.handle(new GameContext(card)));
-        }
-    }
-
     public String getWinner() {
-        if(player.getPoints() <= 21) {
-            if(dealer.getPoints() > 21) {
+        if (player.getPoints() <= TWENTY_ONE) {
+            if (dealer.getPoints() > TWENTY_ONE) {
                 return "Player";
-            } else if(player.getPoints() > dealer.getPoints()) {
+            } else if (player.getPoints() > dealer.getPoints()) {
                 return "Player";
             } else {
                 return "Dealer";
@@ -116,27 +67,56 @@ public class Game {
     }
 
     public void play() {
-        System.out.println("Game start");
         deck.shuffle();
         player.clear();
         dealer.clear();
         publishStart();
+        log.info("Play game");
 
-        Card first = deck.getOne();
-        player.takeCard(first);
-        publishPlayerTakeCard(first);
+        Card firstCard = deck.getOne();
+        player.takeCard(firstCard);
+        publishPlayerTakeCard(firstCard);
+        log.info("Player take first card {}", firstCard);
 
         Card second = deck.getOne();
         player.takeCard(second);
         publishPlayerTakeCard(second);
+        log.info("Player take second card {}", second);
 
         Card hiddenCard = deck.getOne();
         hiddenCard.setHide(true);
         dealer.takeCard(hiddenCard);
         publishDealerTakeCard(hiddenCard);
+        log.info("Dealer take hidden card {}", hiddenCard);
 
-        Card fourth = deck.getOne();
-        dealer.takeCard(fourth);
-        publishDealerTakeCard(fourth);
+        Card lastCard = deck.getOne();
+        dealer.takeCard(lastCard);
+        publishDealerTakeCard(lastCard);
+        log.info("Dealer take second card {}", lastCard);
     }
+
+    public void addGameEventListener(GameEventListener eventHandler) {
+        eventListeners.add(eventHandler);
+    }
+
+    private void publishStand() {
+        eventListeners.forEach(GameEventListener::stand);
+    }
+
+    private void publishStart() {
+        eventListeners.forEach(GameEventListener::gameStart);
+    }
+
+    private void publishGameOver(String winner) {
+        eventListeners.forEach(l -> l.gameOver(winner, player.getPoints(), dealer.getPoints()));
+    }
+
+    private void publishPlayerTakeCard(Card card) {
+        eventListeners.forEach(l -> l.playerGetCard(card, player.getPoints()));
+    }
+
+    private void publishDealerTakeCard(Card card) {
+        eventListeners.forEach(l -> l.dealerGetCard(card, dealer.getPoints()));
+    }
+
 }

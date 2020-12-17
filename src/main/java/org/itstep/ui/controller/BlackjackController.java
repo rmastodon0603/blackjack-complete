@@ -1,5 +1,7 @@
 package org.itstep.ui.controller;
 
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -8,18 +10,14 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextFormatter;
 import javafx.scene.layout.HBox;
-import javafx.util.StringConverter;
 import org.itstep.blackjack.Game;
 import org.itstep.blackjack.NoMoneyEnough;
 import org.itstep.blackjack.card.Card;
-import org.itstep.blackjack.event.EventListener;
-import org.itstep.blackjack.event.EventType;
-import org.itstep.blackjack.event.GameContext;
+import org.itstep.blackjack.event.GameEventListener;
 import org.itstep.ui.CardView;
 
 import java.net.URL;
 import java.util.ResourceBundle;
-import java.util.function.UnaryOperator;
 
 public class BlackjackController implements Initializable {
 
@@ -47,44 +45,65 @@ public class BlackjackController implements Initializable {
     @FXML
     private HBox hbPlayerCards;
 
+    private final BooleanProperty start = new SimpleBooleanProperty(false);
+
     private final Game game;
+
+    private class GameEventHandler implements GameEventListener {
+
+        @Override
+        public void gameStart() {
+            start();
+        }
+
+        @Override
+        public void gameOver(String winner, int playerPoints, int dealerPoints) {
+            stand();
+            updatePlayerPoints(playerPoints);
+            updateDealerPoints(dealerPoints);
+            lblBlackJack.setText(winner + " WIN");
+        }
+
+        @Override
+        public void stand() {
+            stop();
+            CardView node = (CardView) hbDealerCards.getChildren().get(0);
+            node.setHide(false);
+        }
+
+        @Override
+        public void playerGetCard(Card card, int points) {
+            hbPlayerCards.getChildren().add(new CardView(card));
+            updatePlayerPoints(points);
+        }
+
+        @Override
+        public void dealerGetCard(Card card, int points) {
+            hbDealerCards.getChildren().add(new CardView(card));
+            updateDealerPoints(points);
+        }
+
+        @Override
+        public void playerSetBet(int amount) {
+
+        }
+    }
+
+    private void updatePlayerPoints(int points) {
+        lblPlayer.setText("Player: " + points);
+    }
+
+    private void updateDealerPoints(int points) {
+        lblDealer.setText("Dealer: " + points);
+    }
 
     public BlackjackController() {
         game = new Game();
-        game.addEvent(EventType.HIT, data -> {
-            Card card = data.getCard();
-            hbPlayerCards.getChildren().add(new CardView(card));
-            updatePoints();
-        });
-        game.addEvent(EventType.START, data -> {
-            start();
-            updatePoints();
-        });
-        game.addEvent(EventType.PLAYER_GET_CARD, data -> {
-            hbPlayerCards.getChildren().add(new CardView(data.getCard()));
-            updatePoints();
-        });
-        game.addEvent(EventType.DEALER_GET_CARD, data -> {
-            hbDealerCards.getChildren().add(new CardView(data.getCard()));
-            updatePoints();
-        });
-        game.addEvent(EventType.STAND, data -> {
-            CardView node = (CardView) hbDealerCards.getChildren().get(0);
-            Card card = node.getCard();
-            card.setHide(false);
-            hbDealerCards.getChildren().set(0, new CardView(card));
-            updatePoints();
-        });
-        game.addEvent(EventType.GAME_OVER, data -> {
-            updatePoints();
-            stop();
-            lblBlackJack.setText(game.getWinner() + " WIN");
-        });
+        game.addGameEventListener(new GameEventHandler());
     }
 
     @FXML
     public void onPlay(ActionEvent actionEvent) {
-        System.out.println("Play game");
         start();
         game.play();
         try {
@@ -101,51 +120,42 @@ public class BlackjackController implements Initializable {
         return Integer.parseInt(tfBet.getText());
     }
 
-    private void updatePoints() {
-        lblPlayer.setText("Player: " + game.getPlayer().getPoints());
-        lblDealer.setText("Dealer: " + game.getDealer().getPoints());
-    }
-
     @FXML
     public void onStand(ActionEvent actionEvent) {
-        System.out.println("Stand");
-        stop();
         game.stand();
     }
 
     @FXML
     void onHit(ActionEvent actionEvent) {
-        System.out.println("Hit");
         game.hit();
     }
 
     private void start() {
         hbPlayerCards.getChildren().clear();
         hbDealerCards.getChildren().clear();
-        btnHit.setDisable(false);
-        btnStand.setDisable(false);
-        btnPlay.setDisable(true);
-        lblBlackJack.setVisible(false);
+        start.set(true);
     }
 
     private void stop() {
-        btnHit.setDisable(true);
-        btnStand.setDisable(true);
-        btnPlay.setDisable(false);
-        lblBlackJack.setVisible(true);
+        start.set(false);
     }
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         tfBet.setTextFormatter(new TextFormatter<>(change -> {
             String text = change.getText();
-
             if (text.matches("[0-9]*")) {
                 return change;
             }
-
             return null;
         }));
+
+        btnHit.disableProperty().bind(start.not());
+        btnStand.disableProperty().bind(start.not());
+        lblBlackJack.visibleProperty().bind(start.not());
+        btnPlay.disableProperty().bind(start);
+        tfBet.disableProperty().bind(start);
+
         stop();
     }
 }

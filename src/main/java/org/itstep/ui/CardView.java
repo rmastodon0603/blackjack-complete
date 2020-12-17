@@ -1,13 +1,17 @@
 package org.itstep.ui;
 
+import javafx.animation.PauseTransition;
+import javafx.animation.SequentialTransition;
+import javafx.animation.TranslateTransition;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-
+import javafx.util.Duration;
 import org.itstep.blackjack.card.Card;
+
+import java.util.Random;
 
 public class CardView extends ImageView {
     private final Card card;
-    private final Image image;
 
     private String pathToCard(String cardFilename) {
         if (cardFilename == null)
@@ -18,19 +22,39 @@ public class CardView extends ImageView {
 
     public CardView(Card card) {
         this.card = card;
+        loadImage();
+        animate(200);
+    }
+
+    private void animate(int offset) {
+        TranslateTransition transition = new TranslateTransition();
+        transition.setDuration(Duration.millis(500));
+        setTranslateX(-offset);
+        transition.setByX(offset);
+        transition.setNode(this);
+        transition.setAutoReverse(false);
+        transition.play();
+    }
+
+    private void loadImage() {
         String imagePath;
-        if(card.isHide()) {
+        if (card.isHide()) {
             imagePath = "cards/backside.png";
         } else {
             imagePath = "cards/" + card.getRank().getName() + "_of_" + card.getSuite().getName() + ".png";
         }
-        this.image = new Image(pathToCard(imagePath));
-        setImage(this.image);
+
+        setImage(new Image(pathToCard(imagePath)));
         setFitHeight(120);
         setPreserveRatio(true);
     }
 
     public Card getCard() {
         return card;
+    }
+
+    public void setHide(boolean hide) {
+        card.setHide(hide);
+        loadImage();
     }
 }
