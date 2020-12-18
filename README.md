@@ -10,10 +10,12 @@
 
 **Примечание: кликните по диаграмме для получения полной диаграммы с методами и полями**
 
-В проекте уже реализована логика игры в виде класса [Game](src/main/java/org/itstep/blackjack/Game.java) который
+В проекте уже реализована логика игры в виде класса [Game](src/main/java/org/itstep/blackjack/Game.java), который
 находится в пакете [org.itstep.blackjack](src/main/java/org/itstep/blackjack)
 
-Также есть заготовка интерфейса описанного в файле [blackjack.fxml](src/main/resources/blackjack.fxml).
+Также есть описание [интерфейса пользователя](https://ru.wikipedia.org/wiki/%D0%98%D0%BD%D1%82%D0%B5%D1%80%D1%84%D0%B5%D0%B9%D1%81_%D0%BF%D0%BE%D0%BB%D1%8C%D0%B7%D0%BE%D0%B2%D0%B0%D1%82%D0%B5%D0%BB%D1%8F)) 
+в файле [blackjack.fxml](src/main/resources/blackjack.fxml).
+
 Контроллер [BlackjackController](src/main/java/org/itstep/ui/controller/BlackjackController.java), 
 который взаимодействует с `FXML`, также частично реализован. 
 
