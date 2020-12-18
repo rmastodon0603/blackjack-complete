@@ -1,58 +1,117 @@
 # Практическое задание
 
+В этом практическом задании необходимо реализовать полнофункциональную версию игры [BlackJack](https://ru.wikipedia.org/wiki/%D0%91%D0%BB%D1%8D%D0%BA%D0%B4%D0%B6%D0%B5%D0%BA)
+
+Часть приложения уже написана. 
+
+Диаграмма классов сейчас выглядит следующим образом:
+
+[![Class diagram](img/diagram.png)](img/diagramm_full.png)
+
+**Примечание: кликните по диаграмме для получения полной диаграммы с методами и полями**
+
+В проекте уже реализована логика игры в виде класса [Game](src/main/java/org/itstep/blackjack/Game.java) который
+находится в пакете [org.itstep.blackjack](src/main/java/org/itstep/blackjack)
+
+Также есть заготовка интерфейса описанного в файле [blackjack.fxml](src/main/resources/blackjack.fxml).
+Контроллер [BlackjackController](src/main/java/org/itstep/ui/controller/BlackjackController.java), 
+который взаимодействует с `FXML`, также частично реализован. 
+
+Перед вами стоит задача обеспечить взаимодействие между классом [Game](src/main/java/org/itstep/blackjack/Game.java)
+и [BlackjackController](src/main/java/org/itstep/ui/controller/BlackjackController.java).
+
+Для этого мы будем использовать известный паттерн проектирования [наблюдатель](https://refactoring.guru/ru/design-patterns/observer).
+
+Необходимо выполнить следующие шаги:
+
 1. Создайте в пакете [org.itstep.blackjack.event](src/main/java/org/itstep/blackjack/event) интерфейс 
    слушателя игровых событий `GameEventListener`:
 
-```java
-public interface GameEventListener {
-    void gameStart();
-    void stand();
-    void playerGetCard(Card card, int points);
-    void dealerGetCard(Card card, int points);
-    void playerSetBet(int amount);
-    void gameOver(String winner, int playerPoints, int dealerPoints);
-}
-```
+![GameEventListner.java](img/gameeventlistener.png)
+
+[comment]: <> (```java)
+
+[comment]: <> (public interface GameEventListener {)
+
+[comment]: <> (    void gameStart&#40;&#41;;)
+
+[comment]: <> (    void stand&#40;&#41;;)
+
+[comment]: <> (    void playerGetCard&#40;Card card, int points&#41;;)
+
+[comment]: <> (    void dealerGetCard&#40;Card card, int points&#41;;)
+
+[comment]: <> (    void playerSetBet&#40;int amount&#41;;)
+
+[comment]: <> (    void gameOver&#40;String winner, int playerPoints, int dealerPoints&#41;;)
+
+[comment]: <> (})
+
+[comment]: <> (```)
 
 2. В классе [Game](src/main/java/org/itstep/blackjack/Game.java) объявляем список слушателей типа`GameEventListener`:
 
-```java
-private final List<GameEventListener> eventListeners;
-```
+![eventListeners](img/eventlistenersfield.png)
+
+[comment]: <> (```java)
+
+[comment]: <> (private final List<GameEventListener> eventListeners;)
+
+[comment]: <> (```)
 
 Инициализируйте его в конструкторе класса [Game](src/main/java/org/itstep/blackjack/Game.java).
 
 3. Для добавления слушателей реализуйте метод:
 
-```java
-public void addGameEventListener(GameEventListener eventHandler) {
-        eventListeners.add(eventHandler);
-}
-```
+![addGameEventListener](img/addeventlistener.png)
+
+[comment]: <> (```java)
+
+[comment]: <> (public void addGameEventListener&#40;GameEventListener eventHandler&#41; {)
+
+[comment]: <> (        eventListeners.add&#40;eventHandler&#41;;)
+
+[comment]: <> (})
+
+[comment]: <> (```)
 
 4. Добавьте методы для публикации событий в игре:
 
-```java
-    private void publishStand() {
-        eventListeners.forEach(GameEventListener::stand);
-    }
+![publishers](img/publishers.png)
 
-    private void publishStart() {
-        eventListeners.forEach(GameEventListener::gameStart);
-    }
+[comment]: <> (```java)
 
-    private void publishGameOver(String winner) {
-        eventListeners.forEach(l -> l.gameOver(winner, player.getPoints(), dealer.getPoints()));
-    }
+[comment]: <> (    private void publishStand&#40;&#41; {)
 
-    private void publishPlayerTakeCard(Card card) {
-        eventListeners.forEach(l -> l.playerGetCard(card, player.getPoints()));
-    }
+[comment]: <> (        eventListeners.forEach&#40;GameEventListener::stand&#41;;)
 
-    private void publishDealerTakeCard(Card card) {
-        eventListeners.forEach(l -> l.dealerGetCard(card, dealer.getPoints()));
-    }
-```
+[comment]: <> (    })
+
+[comment]: <> (    private void publishStart&#40;&#41; {)
+
+[comment]: <> (        eventListeners.forEach&#40;GameEventListener::gameStart&#41;;)
+
+[comment]: <> (    })
+
+[comment]: <> (    private void publishGameOver&#40;String winner&#41; {)
+
+[comment]: <> (        eventListeners.forEach&#40;l -> l.gameOver&#40;winner, player.getPoints&#40;&#41;, dealer.getPoints&#40;&#41;&#41;&#41;;)
+
+[comment]: <> (    })
+
+[comment]: <> (    private void publishPlayerTakeCard&#40;Card card&#41; {)
+
+[comment]: <> (        eventListeners.forEach&#40;l -> l.playerGetCard&#40;card, player.getPoints&#40;&#41;&#41;&#41;;)
+
+[comment]: <> (    })
+
+[comment]: <> (    private void publishDealerTakeCard&#40;Card card&#41; {)
+
+[comment]: <> (        eventListeners.forEach&#40;l -> l.dealerGetCard&#40;card, dealer.getPoints&#40;&#41;&#41;&#41;;)
+
+[comment]: <> (    })
+
+[comment]: <> (```)
 
 5. Вызовите необходимые методы для публикации всех слушателей о ходе игры в `hit()`, `stand()` и `play()`.
 Внимательно читайте комментарии
@@ -60,54 +119,86 @@ public void addGameEventListener(GameEventListener eventHandler) {
 6. В классе [BlackjackController](src/main/java/org/itstep/ui/controller/BlackjackController.java) 
    создайте [внутренний класс](https://ru.wikipedia.org/wiki/%D0%92%D0%BD%D1%83%D1%82%D1%80%D0%B5%D0%BD%D0%BD%D0%B8%D0%B9_%D0%BA%D0%BB%D0%B0%D1%81%D1%81) `GameEventHandler`:
 
-```java
-private class GameEventHandler implements GameEventListener {
+![GameEventHandler](img/gameeventhandler.png)
 
-        @Override
-        public void gameStart() {
-            start();
-        }
+[comment]: <> (```java)
 
-        @Override
-        public void gameOver(String winner, int playerPoints, int dealerPoints) {
-            stand();
-            updatePlayerPoints(playerPoints);
-            updateDealerPoints(dealerPoints);
-            lblBlackJack.setText(winner + " WIN");
-        }
+[comment]: <> (private class GameEventHandler implements GameEventListener {)
 
-        @Override
-        public void stand() {
-            stop();
-            CardView node = (CardView) hbDealerCards.getChildren().get(0);
-            node.setHide(false);
-        }
+[comment]: <> (        @Override)
 
-        @Override
-        public void playerGetCard(Card card, int points) {
-            hbPlayerCards.getChildren().add(new CardView(card));
-            updatePlayerPoints(points);
-        }
+[comment]: <> (        public void gameStart&#40;&#41; {)
 
-        @Override
-        public void dealerGetCard(Card card, int points) {
-            hbDealerCards.getChildren().add(new CardView(card));
-            updateDealerPoints(points);
-        }
+[comment]: <> (            start&#40;&#41;;)
 
-        @Override
-        public void playerSetBet(int amount) {
+[comment]: <> (        })
 
-        }
-    }
-```
+[comment]: <> (        @Override)
+
+[comment]: <> (        public void gameOver&#40;String winner, int playerPoints, int dealerPoints&#41; {)
+
+[comment]: <> (            stand&#40;&#41;;)
+
+[comment]: <> (            updatePlayerPoints&#40;playerPoints&#41;;)
+
+[comment]: <> (            updateDealerPoints&#40;dealerPoints&#41;;)
+
+[comment]: <> (            lblBlackJack.setText&#40;winner + " WIN"&#41;;)
+
+[comment]: <> (        })
+
+[comment]: <> (        @Override)
+
+[comment]: <> (        public void stand&#40;&#41; {)
+
+[comment]: <> (            stop&#40;&#41;;)
+
+[comment]: <> (            CardView node = &#40;CardView&#41; hbDealerCards.getChildren&#40;&#41;.get&#40;0&#41;;)
+
+[comment]: <> (            node.setHide&#40;false&#41;;)
+
+[comment]: <> (        })
+
+[comment]: <> (        @Override)
+
+[comment]: <> (        public void playerGetCard&#40;Card card, int points&#41; {)
+
+[comment]: <> (            hbPlayerCards.getChildren&#40;&#41;.add&#40;new CardView&#40;card&#41;&#41;;)
+
+[comment]: <> (            updatePlayerPoints&#40;points&#41;;)
+
+[comment]: <> (        })
+
+[comment]: <> (        @Override)
+
+[comment]: <> (        public void dealerGetCard&#40;Card card, int points&#41; {)
+
+[comment]: <> (            hbDealerCards.getChildren&#40;&#41;.add&#40;new CardView&#40;card&#41;&#41;;)
+
+[comment]: <> (            updateDealerPoints&#40;points&#41;;)
+
+[comment]: <> (        })
+
+[comment]: <> (        @Override)
+
+[comment]: <> (        public void playerSetBet&#40;int amount&#41; {)
+
+[comment]: <> (        })
+
+[comment]: <> (    })
+
+[comment]: <> (```)
 
 7. В конструкторе класса [BlackjackController](src/main/java/org/itstep/ui/controller/BlackjackController.java) 
    создайте экземпляр внутреннего класса и передайте его в метод `addEventListener()` объекта `game`:
 
-```java
-game.addGameEventListener(new GameEventHandler());
-```
+![add](img/addhandle.png)
+
+[comment]: <> (```java)
+
+[comment]: <> (game.addGameEventListener&#40;new GameEventHandler&#40;&#41;&#41;;)
+
+[comment]: <> (```)
 
 8. Проверьте работу игры
 
