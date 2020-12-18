@@ -2,10 +2,6 @@ package org.itstep.blackjack;
 
 import lombok.extern.slf4j.Slf4j;
 import org.itstep.blackjack.card.Card;
-import org.itstep.blackjack.event.GameEventListener;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Slf4j
 public class Game {
@@ -15,43 +11,42 @@ public class Game {
     private final Player player;
     private final Player dealer;
     private final Deck deck;
-    private final List<GameEventListener> eventListeners;
 
     public Game() {
         deck = new Deck();
         dealer = new Player(0);
         player = new Player(1000);
-        eventListeners = new ArrayList<>();
     }
 
     public void hit() {
         Card card = deck.getOne();
         player.takeCard(card);
         log.info("Player take a card {}", card);
-        publishPlayerTakeCard(card);
+        // TODO: вызвать publishPlayerTakeCard
         if (player.getPoints() > TWENTY_ONE) {
             dealer.getCards().get(0).setHide(false);
-            publishGameOver(getWinner());
+            // TODO: вызвать publishGameOver
             log.info("Game over. Win {}", getWinner());
         }
     }
 
     public void stand() {
         dealer.getCards().get(0).setHide(false);
-        publishStand();
+        // TODO: вызвать publishStand
         log.info("Stand");
         while (dealer.getPoints() < THRESHOLD) {
             Card card = deck.getOne();
             dealer.takeCard(card);
-            publishDealerTakeCard(card);
+            // TODO: вызвать publishDealerTakeCard
             log.info("Dealer take a card {}", card);
         }
-        publishGameOver(getWinner());
+        // TODO: вызвать publishGameOver(getWinner());
         log.info("Game over. Win {}", getWinner());
     }
 
     public void setBet(int amount) throws NoMoneyEnough {
         player.setBet(amount);
+        // TODO: реализовать логику добавления ставки
     }
 
     public String getWinner() {
@@ -71,53 +66,29 @@ public class Game {
         deck.shuffle();
         player.clear();
         dealer.clear();
-        publishStart();
+        // TODO: вызвать publishStart();
         log.info("Play game");
 
         Card firstCard = deck.getOne();
         player.takeCard(firstCard);
-        publishPlayerTakeCard(firstCard);
+        // TODO: вызвать publishPlayerTakeCard
         log.info("Player take first card {}", firstCard);
 
         Card second = deck.getOne();
         player.takeCard(second);
-        publishPlayerTakeCard(second);
+        // TODO: вызвать publishPlayerTakeCard
         log.info("Player take second card {}", second);
 
         Card hiddenCard = deck.getOne();
         hiddenCard.setHide(true);
         dealer.takeCard(hiddenCard);
-        publishDealerTakeCard(hiddenCard);
+        // TODO: вызвать publishDealerTakeCard
         log.info("Dealer take hidden card {}", hiddenCard);
 
         Card lastCard = deck.getOne();
         dealer.takeCard(lastCard);
-        publishDealerTakeCard(lastCard);
+        // TODO: вызвать publishDealerTakeCard
         log.info("Dealer take second card {}", lastCard);
-    }
-
-    public void addGameEventListener(GameEventListener eventHandler) {
-        eventListeners.add(eventHandler);
-    }
-
-    private void publishStand() {
-        eventListeners.forEach(GameEventListener::stand);
-    }
-
-    private void publishStart() {
-        eventListeners.forEach(GameEventListener::gameStart);
-    }
-
-    private void publishGameOver(String winner) {
-        eventListeners.forEach(l -> l.gameOver(winner, player.getPoints(), dealer.getPoints()));
-    }
-
-    private void publishPlayerTakeCard(Card card) {
-        eventListeners.forEach(l -> l.playerGetCard(card, player.getPoints()));
-    }
-
-    private void publishDealerTakeCard(Card card) {
-        eventListeners.forEach(l -> l.dealerGetCard(card, dealer.getPoints()));
     }
 
 }

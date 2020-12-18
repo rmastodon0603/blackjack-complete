@@ -12,9 +12,6 @@ import javafx.scene.control.TextFormatter;
 import javafx.scene.layout.HBox;
 import org.itstep.blackjack.Game;
 import org.itstep.blackjack.NoMoneyEnough;
-import org.itstep.blackjack.card.Card;
-import org.itstep.blackjack.event.GameEventListener;
-import org.itstep.ui.CardView;
 
 import java.net.URL;
 import java.util.ResourceBundle;
@@ -49,46 +46,6 @@ public class BlackjackController implements Initializable {
 
     private final Game game;
 
-    private class GameEventHandler implements GameEventListener {
-
-        @Override
-        public void gameStart() {
-            start();
-        }
-
-        @Override
-        public void gameOver(String winner, int playerPoints, int dealerPoints) {
-            stand();
-            updatePlayerPoints(playerPoints);
-            updateDealerPoints(dealerPoints);
-            lblBlackJack.setText(winner + " WIN");
-        }
-
-        @Override
-        public void stand() {
-            stop();
-            CardView node = (CardView) hbDealerCards.getChildren().get(0);
-            node.setHide(false);
-        }
-
-        @Override
-        public void playerGetCard(Card card, int points) {
-            hbPlayerCards.getChildren().add(new CardView(card));
-            updatePlayerPoints(points);
-        }
-
-        @Override
-        public void dealerGetCard(Card card, int points) {
-            hbDealerCards.getChildren().add(new CardView(card));
-            updateDealerPoints(points);
-        }
-
-        @Override
-        public void playerSetBet(int amount) {
-
-        }
-    }
-
     private void updatePlayerPoints(int points) {
         lblPlayer.setText("Player: " + points);
     }
@@ -99,12 +56,11 @@ public class BlackjackController implements Initializable {
 
     public BlackjackController() {
         game = new Game();
-        game.addGameEventListener(new GameEventHandler());
     }
 
     @FXML
     public void onPlay(ActionEvent actionEvent) {
-        start();
+        restart();
         game.play();
         try {
             game.setBet(getBet());
@@ -130,7 +86,7 @@ public class BlackjackController implements Initializable {
         game.hit();
     }
 
-    private void start() {
+    private void restart() {
         hbPlayerCards.getChildren().clear();
         hbDealerCards.getChildren().clear();
         start.set(true);
