@@ -4,6 +4,7 @@ module org.itstep {
     requires lombok;
     requires org.slf4j;
     requires static org.mapstruct.processor;
+    
     exports org.itstep.ui.controller;
     exports org.itstep.ui;
     exports org.itstep.blackjack;
